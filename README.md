@@ -1,0 +1,1 @@
+Service which manages drone flight path and communication with the main system.
