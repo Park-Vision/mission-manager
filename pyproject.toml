@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "mission-manager"
+version = "0.1.0"
+description = "Service which manages drone flight path and communication with the main system."
+authors = ["Szymon Romanek <srszymonsr@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+albatros-uav = "^0.4.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pylama = "^8.4.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
