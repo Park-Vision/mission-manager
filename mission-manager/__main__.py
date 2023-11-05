@@ -1,16 +1,26 @@
-from transitions import Machine
-
+import asyncio
+import argparse
+from transitions.extensions.asyncio import AsyncMachine
 from drone import Drone, DroneStates
-    
 
-transitions = [ #TODO
-    { 'trigger': 'get_ready', 'source': DroneStates.INITIALIZING, 'dest': DroneStates.READY },
-    { 'trigger': 'evaporate', 'source': 'liquid', 'dest': 'gas' },
-    { 'trigger': 'sublimate', 'source': 'solid', 'dest': 'gas' },
-    { 'trigger': 'ionize', 'source': 'gas', 'dest': 'plasma' }
-]
+
+async def run_mission():
+    await drone.process_drone_messages()
+
 
 if __name__ == "__main__":
-    drone = Drone()
-    state_machine = Machine(model=drone, states=DroneStates, initial=DroneStates.INITIALIZING, transitions=transitions)
-    drone.get_ready()
+    parser = argparse.ArgumentParser(description="Drone mission manager")
+    parser.add_argument("--kafka", action="store_true")
+    parser.add_argument("--no-kafka", dest="kafka", action="store_false")
+    parser.set_defaults(kafka=True)
+
+    args = parser.parse_args()
+
+    drone = Drone(args)
+    state_machine = AsyncMachine(
+        model=drone, states=DroneStates, initial=DroneStates.INITIAL
+    )
+
+    asyncio.get_event_loop().run_until_complete(
+        asyncio.gather(drone.process_drone_messages(), drone.to_PREPARE())
+    )

@@ -1,3 +1,6 @@
+# Specific in this project
+mission-manager/map.html
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
