@@ -1,6 +1,6 @@
+import config
 from mission.path import create_path
 from mission.waypoint import Waypoint
-import config
 
 correct_order = [
     config.LANDING_POINT,

@@ -1,5 +1,6 @@
 import json
-from confluent_kafka import Producer, Consumer
+
+from confluent_kafka import Consumer, Producer
 from telemetry.kafka_connection import KafkaConnector
 
 connector = KafkaConnector('localhost:9092')

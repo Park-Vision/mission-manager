@@ -1,14 +1,13 @@
+import asyncio
 import enum
 import json
 from dataclasses import asdict
 
-import asyncio
+import config
 from albatros.copter import Copter
 from albatros.enums import CopterFlightModes
-
-import config
-from mission.path import create_path
 from api_requests.api_requests import get_parking_spots
+from mission.path import create_path
 from mission.waypoint import process_parking_json
 from telemetry.kafka_connection import KafkaConnector
 

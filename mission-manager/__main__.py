@@ -1,7 +1,8 @@
-import asyncio
 import argparse
-from transitions.extensions.asyncio import AsyncMachine
+import asyncio
+
 from drone import Drone, DroneStates
+from transitions.extensions.asyncio import AsyncMachine
 
 
 async def run_mission():

@@ -1,8 +1,9 @@
 import os
-from mission.path import create_path
-from mission.waypoint import Waypoint
+
 import folium
 import numpy as np
+from mission.path import create_path
+from mission.waypoint import Waypoint
 
 
 def generate_map(points_ordered):

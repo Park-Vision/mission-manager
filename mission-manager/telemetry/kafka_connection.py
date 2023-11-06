@@ -1,7 +1,9 @@
 import asyncio
 import json
-from confluent_kafka import Producer, Consumer
+
 import config
+from confluent_kafka import Consumer, Producer
+
 
 class KafkaConnector:
     def __init__(self, server: str, command_callbacks: dict) -> None:
