@@ -25,6 +25,7 @@ class DroneStates(enum.Enum):
 
 class Drone(object):
     def __init__(self, args) -> None:
+        self.path = None
         self.albatros_copter = Copter()
         self.use_kafka = args.kafka
         if self.use_kafka:
@@ -59,7 +60,7 @@ class Drone(object):
 
     async def on_enter_PATH(self):
         # Create path from waypoints
-        waypoints = process_parking_json(get_parking_spots(config.PARKING_ID))
+        waypoints = process_parking_json(get_parking_spots(config.DRONE_ID))
         waypoints.insert(0, config.HOME_WAYPOINT)
         self.path = create_path(waypoints)
         await self.to_TAKEOFF()
@@ -72,10 +73,10 @@ class Drone(object):
         self.albatros_copter.arm()
         self.albatros_copter.takeoff(target_alt)
         while (
-            current_altitude := self.albatros_copter.get_corrected_position().alt
+                current_altitude := self.albatros_copter.get_corrected_position().alt
         ) < target_alt - 0.25:  # tolerance
             print(f"Altitude: {current_altitude} m")
-            asyncio.sleep(1)
+            await asyncio.sleep(1)
 
         # Target altitude was reached
         await self.to_FLIGHT()

@@ -17,7 +17,7 @@ def create_data_model(points: list[Waypoint]):
     for point_A in points:
         distance_list = []
         for point_B in points:
-            # conversion to int is neccessary for OR Tools
+            # conversion to int is necessary for OR Tools
             distance_list.append(
                 int(distance.distance(point_A.position, point_B.position).m)
             )
