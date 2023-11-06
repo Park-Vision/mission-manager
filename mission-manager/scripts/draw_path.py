@@ -1,5 +1,6 @@
 import os
 from mission.path import create_path
+from mission.waypoint import Waypoint
 import folium
 import numpy as np
 
@@ -77,8 +78,10 @@ def draw():
         (51.11050, 17.05950),
         (51.11030, 17.05940),
     ]
-    path = create_path(points)
-    generate_map(path)
+    wps = [Waypoint(1, point[0], point[1]) for point in points]
+    path = create_path(wps)
+    tuples = [wp.position for wp in path]
+    generate_map(tuples)
 
 
 draw()

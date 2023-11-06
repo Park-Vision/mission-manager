@@ -22,5 +22,7 @@ if __name__ == "__main__":
     )
 
     asyncio.get_event_loop().run_until_complete(
-        asyncio.gather(drone.process_drone_messages(), drone.to_PREPARE())
+        asyncio.gather(drone.process_drone_messages(),
+                       drone.to_PREPARE(),
+                       drone.kafka_connection.consume_messages())
     )

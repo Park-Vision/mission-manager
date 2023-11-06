@@ -4,12 +4,13 @@ from dataclasses import asdict
 
 import asyncio
 from albatros.copter import Copter
+from albatros.enums import CopterFlightModes
 
 import config
-from telemetry.kafka_connection import KafkaConnector
 from mission.path import create_path
 from api_requests.api_requests import get_parking_spots
 from mission.waypoint import process_parking_json
+from telemetry.kafka_connection import KafkaConnector
 
 
 class DroneStates(enum.Enum):
@@ -28,8 +29,21 @@ class Drone(object):
         self.path = None
         self.albatros_copter = Copter()
         self.use_kafka = args.kafka
+        self.ready_for_takeoff = False
         if self.use_kafka:
-            self.kafka_connection = KafkaConnector()
+            command_callbacks = {
+                "start": self.handle_start,
+                "stop": self.handle_stop,
+            }
+            self.kafka_connection = KafkaConnector('localhost:9092', command_callbacks)
+
+    def handle_start(self):
+        """"React to 'start' signal sent from operator - ready for takeoff"""
+        self.ready_for_takeoff = True
+
+    def handle_stop(self):
+        """React to 'stop' signal sent from operator - immediately return home"""
+        self.to_RETURN()
 
     async def process_drone_messages(self):
         # TODO real implementation - implement albatros
@@ -50,11 +64,12 @@ class Drone(object):
         await self.to_READY()
 
     async def on_enter_READY(self):
-        print("We've just entered state ready!")
-        # Wait for signal from operator
+        print("Drone ready, waiting for start signal")
 
-        # TODO real implementation
-        await asyncio.sleep(1)
+        # wait for the operator to send start signal...
+        while not self.ready_for_takeoff:
+            await asyncio.sleep(1)
+
         # Received takeoff command
         await self.to_PATH()
 
@@ -82,4 +97,10 @@ class Drone(object):
         await self.to_FLIGHT()
 
     async def on_enter_FLIGHT(self):
+        print("To be implemented")
+
+    async def on_enter_RETURN(self):
+        self.albatros_copter.set_mode(CopterFlightModes.RTL)
+
+    async def on_enter_RAPORT(self):
         print("To be implemented")
