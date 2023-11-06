@@ -34,10 +34,10 @@ class Drone(object):
                 "start": self.handle_start,
                 "stop": self.handle_stop,
             }
-            self.kafka_connection = KafkaConnector('localhost:9092', command_callbacks)
+            self.kafka_connection = KafkaConnector("localhost:9092", command_callbacks)
 
     def handle_start(self):
-        """"React to 'start' signal sent from operator - ready for takeoff"""
+        """ "React to 'start' signal sent from operator - ready for takeoff"""
         self.ready_for_takeoff = True
 
     def handle_stop(self):

@@ -8,11 +8,13 @@ from confluent_kafka import Consumer, Producer
 class KafkaConnector:
     def __init__(self, server: str, command_callbacks: dict) -> None:
         self.producer = Producer({"bootstrap.servers": server})
-        self.consumer = Consumer({
-        'bootstrap.servers': server,
-        'group.id': 'parkVision',
-        'auto.offset.reset': 'earliest'
-        })
+        self.consumer = Consumer(
+            {
+                "bootstrap.servers": server,
+                "group.id": "parkVision",
+                "auto.offset.reset": "earliest",
+            }
+        )
         self.command_callbacks = command_callbacks
 
     def delivery_report(self, err, msg):
@@ -31,7 +33,10 @@ class KafkaConnector:
         # be triggered from the call to poll() above, or flush() below, when the
         # message has been successfully delivered or failed permanently.
         self.producer.produce(
-            "drones-info", data.encode("utf-8"), callback=self.delivery_report, key=str(config.DRONE_ID)
+            "drones-info",
+            data.encode("utf-8"),
+            callback=self.delivery_report,
+            key=str(config.DRONE_ID),
         )
 
     def flush(self):
@@ -39,9 +44,8 @@ class KafkaConnector:
 
     async def consume_messages(self):
         """Async consume messages on assigned topic, when message is received, callback"""
-        self.consumer.subscribe([f'drone-{config.DRONE_ID}'])
+        self.consumer.subscribe([f"drone-{config.DRONE_ID}"])
         print("Subscribed to drone topic")
-
 
         while True:
             loop = asyncio.get_running_loop()
@@ -53,9 +57,9 @@ class KafkaConnector:
                 print("Consumer error: {}".format(msg.error()))
                 continue
 
-            msg_value = msg.value().decode('utf-8')
-            print('Received message: {}'.format(msg_value))
-            
+            msg_value = msg.value().decode("utf-8")
+            print("Received message: {}".format(msg_value))
+
             # TODO remove------
             if msg_value == "start":
                 self.send_one(json.dumps({"Lat": 51, "Lon": 17}))
