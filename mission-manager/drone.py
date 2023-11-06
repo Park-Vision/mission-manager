@@ -73,7 +73,7 @@ class Drone(object):
         self.albatros_copter.arm()
         self.albatros_copter.takeoff(target_alt)
         while (
-                current_altitude := self.albatros_copter.get_corrected_position().alt
+            current_altitude := self.albatros_copter.get_corrected_position().alt
         ) < target_alt - 0.25:  # tolerance
             print(f"Altitude: {current_altitude} m")
             await asyncio.sleep(1)
