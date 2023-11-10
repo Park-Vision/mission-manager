@@ -23,10 +23,18 @@ if __name__ == "__main__":
         model=drone, states=DroneStates, initial=DroneStates.INITIAL
     )
 
-    asyncio.get_event_loop().run_until_complete(
-        asyncio.gather(
-            drone.process_drone_messages(),
-            drone.to_PREPARE(),
-            drone.kafka_connection.consume_messages(),
+    if args.kafka:
+        asyncio.get_event_loop().run_until_complete(
+            asyncio.gather(
+                drone.process_drone_messages(),
+                drone.to_PREPARE(),
+                drone.kafka_connection.consume_messages(),
+            )
         )
-    )
+    else:
+        asyncio.get_event_loop().run_until_complete(
+            asyncio.gather(
+                drone.process_drone_messages(),
+                drone.to_PREPARE(),
+            )
+        )
