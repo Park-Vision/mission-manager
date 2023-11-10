@@ -10,5 +10,12 @@ Testing without broker connection:
 With kafka for linux- works on my machine - kafka needs to be installed in a certain directory etc. etc.
 ```sudo run_locally.sh```
 
+# Docker run
+
+Development docker:
+```docker-compose up --build```
+or
+```docker-compose up```
+
 # Tests
 To run tests see run_test.sh

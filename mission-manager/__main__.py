@@ -17,6 +17,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print(f"Mission manager starting - kafka {args.kafka}")
     drone = Drone(args)
     state_machine = AsyncMachine(
         model=drone, states=DroneStates, initial=DroneStates.INITIAL

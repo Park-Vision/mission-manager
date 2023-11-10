@@ -1,0 +1,6 @@
+version: '3'
+services:
+  mission-manager:
+    image: mission-manager
+    container_name: mission-manager
+    build: .
