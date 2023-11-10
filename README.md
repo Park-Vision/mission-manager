@@ -2,7 +2,7 @@ Service which manages drone flight path and communication with the main system.
 
 # First run - local
 ```poetry install```
-```poetry run python mission-manager```
+```poetry run python manager```
 
 Testing without broker connection:
 ``` --no-kafka```

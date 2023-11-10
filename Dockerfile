@@ -15,4 +15,4 @@ ENV PYTHONPATH /app
 
 EXPOSE 14550/udp
 
-CMD ["poetry", "run", "python", "mission-manager"]
+CMD ["poetry", "run", "python", "manager"]
