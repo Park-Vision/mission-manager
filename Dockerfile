@@ -13,4 +13,6 @@ RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
 COPY . /app/
 ENV PYTHONPATH /app
 
+EXPOSE 14550/udp
+
 CMD ["poetry", "run", "python", "mission-manager"]

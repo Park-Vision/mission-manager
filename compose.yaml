@@ -4,3 +4,5 @@ services:
     image: mission-manager
     container_name: mission-manager
     build: .
+    ports:
+      - "14550:14550/udp"
