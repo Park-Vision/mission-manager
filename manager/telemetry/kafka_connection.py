@@ -5,7 +5,6 @@ from manager import config
 from confluent_kafka import Consumer, Producer
 
 ssl_config = {
-   #"metadata.broker.list": at_least_one_of_the_brokers,
    'metadata.broker.list': 'SSL://127.0.0.1:29092',
    "security.protocol": "SSL",
    # CA certificate file for verifying the broker's certificate.
