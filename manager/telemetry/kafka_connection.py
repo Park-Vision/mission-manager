@@ -27,7 +27,7 @@ class KafkaConnector:
 
         con_config = {
                 "bootstrap.servers": server,
-                "group.id": "parkVision",
+                "group.id": "drones",
                 "auto.offset.reset": "earliest",
                 }
         con_config.update(ssl_config)
