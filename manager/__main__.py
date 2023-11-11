@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from drone import Drone, DroneStates
+from manager.drone import Drone, DroneStates
 from transitions.extensions.asyncio import AsyncMachine
 
 

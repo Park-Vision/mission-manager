@@ -1,5 +1,5 @@
 from geopy import distance
-from mission.waypoint import Waypoint
+from manager.mission.waypoint import Waypoint
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 """

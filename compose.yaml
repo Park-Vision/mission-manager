@@ -6,6 +6,7 @@ services:
     build: .
     ports:
       - "14550:14550/udp"
+      - "9092:9092"
   sitl:
     image: wnt3rmute/ardupilot-sitl
     network_mode: "host"

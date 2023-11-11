@@ -1,20 +1,39 @@
 import asyncio
 import json
 
-import config
+from manager import config
 from confluent_kafka import Consumer, Producer
+
+ssl_config = {
+   #"metadata.broker.list": at_least_one_of_the_brokers,
+   'metadata.broker.list': 'SSL://127.0.0.1:29092',
+   "security.protocol": "SSL",
+   # CA certificate file for verifying the broker's certificate.
+   "ssl.ca.location": "/home/szymon/development/parkvision/parkvision-backend/ssl2/ca-cert",
+   # Client's certificate
+   "ssl.certificate.location": "/home/szymon/development/parkvision/parkvision-backend/ssl2/client_drone_client.pem",
+   # Client's key
+   "ssl.key.location": "/home/szymon/development/parkvision/parkvision-backend/ssl2/client_drone_client_v2.key",
+   # Key password, if any.
+   "ssl.key.password": "maciek",
+   "ssl.endpoint.identification.algorithm": "none",
+}
 
 
 class KafkaConnector:
     def __init__(self, server: str, command_callbacks: dict) -> None:
-        self.producer = Producer({"bootstrap.servers": server})
-        self.consumer = Consumer(
-            {
+        prod_config = {"bootstrap.servers": server}
+        prod_config.update(ssl_config)
+
+        con_config = {
                 "bootstrap.servers": server,
                 "group.id": "parkVision",
                 "auto.offset.reset": "earliest",
-            }
-        )
+                }
+        con_config.update(ssl_config)
+
+        self.producer = Producer(prod_config)
+        self.consumer = Consumer(con_config)
         self.command_callbacks = command_callbacks
 
     def delivery_report(self, err, msg):
@@ -44,7 +63,8 @@ class KafkaConnector:
 
     async def consume_messages(self):
         """Async consume messages on assigned topic, when message is received, callback"""
-        self.consumer.subscribe([f"drone-{config.DRONE_ID}"])
+        # self.consumer.subscribe([f"drone-{config.DRONE_ID}"]) # TODO change topic
+        self.consumer.subscribe([f"drones-info"])
         print("Subscribed to drone topic")
 
         while True:
