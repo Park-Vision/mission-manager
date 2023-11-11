@@ -9,11 +9,11 @@ ssl_config = {
    'metadata.broker.list': 'SSL://127.0.0.1:29092',
    "security.protocol": "SSL",
    # CA certificate file for verifying the broker's certificate.
-   "ssl.ca.location": "/home/szymon/development/parkvision/parkvision-backend/ssl2/ca-cert",
+   "ssl.ca.location": "ssl/ca-cert",
    # Client's certificate
-   "ssl.certificate.location": "/home/szymon/development/parkvision/parkvision-backend/ssl2/client_drone_client.pem",
+   "ssl.certificate.location": "ssl/client_drone_client.pem",
    # Client's key
-   "ssl.key.location": "/home/szymon/development/parkvision/parkvision-backend/ssl2/client_drone_client_v2.key",
+   "ssl.key.location": "ssl/client_drone_client_v2.key",
    # Key password, if any.
    "ssl.key.password": "maciek",
    "ssl.endpoint.identification.algorithm": "none",
