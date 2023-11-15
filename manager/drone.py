@@ -10,6 +10,7 @@ from manager.api_requests.api_requests import get_parking_spots
 from manager.mission.path import create_path
 from manager.mission.waypoint import process_parking_json
 from manager.telemetry.kafka_connection import KafkaConnector
+from manager.mission.waypoint import Waypoint
 
 
 class DroneStates(enum.Enum):
@@ -29,6 +30,8 @@ class Drone(object):
         self.albatros_copter = Copter()
         self.use_kafka = args.kafka
         self.ready_for_takeoff = False
+        self.home_point = Waypoint()
+
         if self.use_kafka:
             command_callbacks = {
                 "start": self.handle_start,
@@ -60,6 +63,10 @@ class Drone(object):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.albatros_copter.wait_gps_fix)
 
+        # Set home point which will be used as starting location
+        starting_position = self.albatros_copter.get_corrected_position()
+        self.home_point = Waypoint(lat=starting_position.lat * 1.0e-7, lon=starting_position.lon * 1.0e-7)
+
         await self.to_READY()
 
     async def on_enter_READY(self):
@@ -75,7 +82,7 @@ class Drone(object):
     async def on_enter_PATH(self):
         # Create path from waypoints
         waypoints = process_parking_json(get_parking_spots(config.DRONE_ID))
-        waypoints.insert(0, config.HOME_WAYPOINT)
+        waypoints.insert(0, self.home_point)
         self.path = create_path(waypoints)
         await self.to_TAKEOFF()
 

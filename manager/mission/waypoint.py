@@ -1,5 +1,5 @@
 class Waypoint:
-    def __init__(self, spot_id: int, lat: float, lon: float) -> None:
+    def __init__(self, spot_id: int = -1, lat: float = 0.0, lon: float = 0.0) -> None:
         self.spot_id = spot_id
         self.position = (lat, lon)
 

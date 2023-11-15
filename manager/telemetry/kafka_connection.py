@@ -5,7 +5,7 @@ from manager import config
 from confluent_kafka import Consumer, Producer
 
 ssl_config = {
-   'metadata.broker.list': 'SSL://127.0.0.1:29092',
+   'metadata.broker.list': 'SSL://' + config.PARKVISION_SERVER,
    "security.protocol": "SSL",
    # CA certificate file for verifying the broker's certificate.
    "ssl.ca.location": "ssl/ca-cert",
