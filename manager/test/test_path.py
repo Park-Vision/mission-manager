@@ -1,19 +1,21 @@
-import config
-from mission.path import create_path
-from mission.waypoint import Waypoint
+from manager.mission.path import create_path
+from manager.mission.waypoint import Waypoint
+
+LANDING_POINT = (51.11016, 17.05963)
+
 
 correct_order = [
-    config.LANDING_POINT,
+    LANDING_POINT,
     (51.11016, 17.05936),
     (51.11002, 17.0591),
     (51.10977, 17.05894),
     (51.10987, 17.05903),
     (51.10996, 17.05923),
-    config.LANDING_POINT,
+    LANDING_POINT,
 ]
 
 points = [
-    config.LANDING_POINT,
+    LANDING_POINT,
     (51.11016, 17.05936),
     (51.10977, 17.05894),
     (51.10987, 17.05903),

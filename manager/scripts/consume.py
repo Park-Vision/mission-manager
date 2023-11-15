@@ -1,8 +1,13 @@
 import json
+import asyncio
 
-from telemetry.kafka_connection import KafkaConnector
+from manager.telemetry.kafka_connection import KafkaConnector
+from manager.config import PARKVISION_SERVER
 
-connector = KafkaConnector("localhost:9092")
+async def con(connector):
+    await connector.consume_messages()
 
-connector.send_one(json.dumps({"Lat": 51, "Lon": 17}))
-connector.consume_messages()
+connector = KafkaConnector(PARKVISION_SERVER, {})
+for i in range(3):
+    connector.send_one(json.dumps({"Lat": 69, "Lon": 69}))
+asyncio.run(con(connector))

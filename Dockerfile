@@ -14,5 +14,6 @@ COPY . /app/
 ENV PYTHONPATH /app
 
 EXPOSE 14550/udp
+EXPOSE 9092
 
-CMD ["poetry", "run", "python", "manager"]
+CMD ["poetry", "run", "python", "-m", "manager"]
