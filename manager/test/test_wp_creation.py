@@ -1,4 +1,4 @@
-from mission.waypoint import Waypoint, process_parking_json
+from manager.mission.waypoint import Waypoint, process_parking_json
 
 input = [
     {
