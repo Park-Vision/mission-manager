@@ -62,8 +62,7 @@ class KafkaConnector:
 
     async def consume_messages(self):
         """Async consume messages on assigned topic, when message is received, callback"""
-        # self.consumer.subscribe([f"drone-{config.DRONE_ID}"]) # TODO change topic
-        self.consumer.subscribe([f"drones-info"])
+        self.consumer.subscribe([f"drone-{config.DRONE_ID}"])
         print("Subscribed to drone topic")
 
         while True:
@@ -78,11 +77,6 @@ class KafkaConnector:
 
             msg_value = msg.value().decode("utf-8")
             print("Received message: {}".format(msg_value))
-
-            # TODO remove------
-            if msg_value == "start":
-                self.send_one(json.dumps({"Lat": 51, "Lon": 17}))
-            # end to remove----
 
             # react to command, by executing drone function
             # assigned to command content

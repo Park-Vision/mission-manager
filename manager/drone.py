@@ -1,6 +1,7 @@
 import asyncio
 import enum
 import json
+import time
 from dataclasses import asdict
 
 from manager import config
@@ -8,12 +9,12 @@ from albatros.copter import Copter
 from albatros.enums import CopterFlightModes
 from manager.api_requests.api_requests import get_parking_spots
 from manager.mission.path import create_path
-from manager.mission.waypoint import process_parking_json
+from manager.mission.waypoint import process_parking_json, Waypoint
 from manager.telemetry.kafka_connection import KafkaConnector
-from manager.mission.waypoint import Waypoint
+from manager.mission.mission import Mission, MissionStatus
 
 
-class DroneStates(enum.Enum):
+class DroneState(enum.Enum):
     INITIAL = 0
     PREPARE = 1
     READY = 2
@@ -31,6 +32,7 @@ class Drone(object):
         self.use_kafka = args.kafka
         self.ready_for_takeoff = False
         self.home_point = Waypoint()
+        self.mission = Mission()
 
         if self.use_kafka:
             command_callbacks = {
@@ -47,17 +49,17 @@ class Drone(object):
         """React to 'stop' signal sent from operator - immediately return home"""
         self.to_RETURN()
 
-    async def process_drone_messages(self):
+    async def process_arducopter_messages(self):
         # TODO real implementation - implement albatros
         while True:
             position = self.albatros_copter.get_corrected_position()
             # print(asdict(position))
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
             if self.use_kafka:
                 self.kafka_connection.send_one(json.dumps(asdict(position)))
 
     async def on_enter_PREPARE(self):
-        print("Drone initializing...")
+        print("Entered PREPARE")
 
         # wait for GPS signal - wrap synchronous function in executor, to avoid blocking
         loop = asyncio.get_running_loop()
@@ -70,7 +72,7 @@ class Drone(object):
         await self.to_READY()
 
     async def on_enter_READY(self):
-        print("Drone ready, waiting for start signal")
+        print("Entered ready, waiting for start signal")
 
         # wait for the operator to send start signal...
         while not self.ready_for_takeoff:
@@ -80,6 +82,8 @@ class Drone(object):
         await self.to_PATH()
 
     async def on_enter_PATH(self):
+        print("Entered PATH, creating optimal route")
+
         # Create path from waypoints
         waypoints = process_parking_json(get_parking_spots(config.DRONE_ID))
         waypoints.insert(0, self.home_point)
@@ -87,7 +91,11 @@ class Drone(object):
         await self.to_TAKEOFF()
 
     async def on_enter_TAKEOFF(self):
-        # Takeoff to set altitude
+        """Takeoff to set altitude"""
+        print("Entered TAKEOFF")
+
+        self.mission.start_timestamp = int(time.time())
+        self.mission.status = MissionStatus.ONGOING
 
         target_alt = 15
         # TODO probably fix asyncio here
@@ -103,10 +111,28 @@ class Drone(object):
         await self.to_FLIGHT()
 
     async def on_enter_FLIGHT(self):
-        print("To be implemented")
+        print("Entered FLIGHT")
+        await self.to_RETURN()
 
     async def on_enter_RETURN(self):
+        print("Entered RETURN")
+
         self.albatros_copter.set_mode(CopterFlightModes.RTL)
 
+        # Detect landing
+        while (
+            current_altitude := self.albatros_copter.get_corrected_position().alt
+        ) > 0.25:  # tolerance
+            print(f"Altitude: {current_altitude} m")
+            await asyncio.sleep(1)
+
+        # Landed
+        self.mission.end_timestamp = int(time.time())
+        self.mission.status = MissionStatus.FINISHED
+
+        await self.to_RAPORT()
+
     async def on_enter_RAPORT(self):
-        print("To be implemented")
+        print("Entered RAPORT")
+
+        self.kafka_connection.send_one(json.dumps(asdict(self.mission)))
