@@ -40,7 +40,5 @@ def test_path(correct_order):
     # path could start from the opposite side
     input_points.insert(0, LANDING_POINT)
 
-    input_waypoints = [Waypoint(0, point[0], point[1]) for point in input_points]
-
-    path = create_path(input_waypoints)
+    path = create_path([Waypoint(0, point[0], point[1]) for point in input_points])
     assert path == correct_order_waypoints
