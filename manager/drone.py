@@ -4,6 +4,8 @@ import json
 import time
 from dataclasses import asdict
 
+from transitions.extensions.asyncio import AsyncMachine
+
 from manager import config
 from albatros.copter import Copter
 from albatros.enums import CopterFlightModes
@@ -27,6 +29,9 @@ class DroneState(enum.Enum):
 
 class Drone(object):
     def __init__(self, args) -> None:
+        self.state_machine = AsyncMachine(
+            model=self, states=DroneState, initial=DroneState.INITIAL
+        )
         self.path = None
         self.albatros_copter = Copter()
         self.use_kafka = args.kafka
@@ -49,6 +54,12 @@ class Drone(object):
         """React to 'stop' signal sent from operator - immediately return home"""
         self.to_RETURN()
 
+    def send_mission_stage(self):
+        """Send current stage enum value to broker"""
+        message = {"type": "stage", "stage": int(self.state.value)}
+        print(message)
+        self.kafka_connection.send_one(json.dumps(message))
+
     async def process_arducopter_messages(self):
         # TODO real implementation - implement albatros
         while True:
@@ -60,6 +71,7 @@ class Drone(object):
 
     async def on_enter_PREPARE(self):
         print("Entered PREPARE")
+        self.send_mission_stage()
 
         # wait for GPS signal - wrap synchronous function in executor, to avoid blocking
         loop = asyncio.get_running_loop()
@@ -69,10 +81,14 @@ class Drone(object):
         starting_position = self.albatros_copter.get_corrected_position()
         self.home_point = Waypoint(lat=starting_position.lat * 1.0e-7, lon=starting_position.lon * 1.0e-7)
 
+        # Ser ardupilot flight mode
+        self.albatros_copter.set_mode(CopterFlightModes.GUIDED)
+
         await self.to_READY()
 
     async def on_enter_READY(self):
         print("Entered ready, waiting for start signal")
+        self.send_mission_stage()
 
         # wait for the operator to send start signal...
         while not self.ready_for_takeoff:
@@ -83,6 +99,7 @@ class Drone(object):
 
     async def on_enter_PATH(self):
         print("Entered PATH, creating optimal route")
+        self.send_mission_stage()
 
         # Create path from waypoints
         waypoints = process_parking_json(get_parking_spots(config.DRONE_ID))
@@ -93,6 +110,7 @@ class Drone(object):
     async def on_enter_TAKEOFF(self):
         """Takeoff to set altitude"""
         print("Entered TAKEOFF")
+        self.send_mission_stage()
 
         self.mission.start_timestamp = int(time.time())
         self.mission.status = MissionStatus.ONGOING
@@ -113,9 +131,11 @@ class Drone(object):
     async def on_enter_FLIGHT(self):
         print("Entered FLIGHT")
         await self.to_RETURN()
+        self.send_mission_stage()
 
     async def on_enter_RETURN(self):
         print("Entered RETURN")
+        self.send_mission_stage()
 
         self.albatros_copter.set_mode(CopterFlightModes.RTL)
 
@@ -134,6 +154,7 @@ class Drone(object):
 
     async def on_enter_RAPORT(self):
         print("Entered RAPORT")
+        self.send_mission_stage()
 
         mission_message = asdict(self.mission)
         mission_message["type"] = "missionResult"

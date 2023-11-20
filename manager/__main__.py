@@ -1,8 +1,7 @@
 import argparse
 import asyncio
 
-from manager.drone import Drone, DroneState
-from transitions.extensions.asyncio import AsyncMachine
+from manager.drone import Drone
 
 
 async def run_mission():
@@ -19,9 +18,6 @@ if __name__ == "__main__":
 
     print(f"Mission manager starting - kafka {args.kafka}")
     drone = Drone(args)
-    state_machine = AsyncMachine(
-        model=drone, states=DroneState, initial=DroneState.INITIAL
-    )
 
     if args.kafka:
         asyncio.get_event_loop().run_until_complete(
