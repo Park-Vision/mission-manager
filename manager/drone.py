@@ -60,6 +60,7 @@ class Drone(object):
 
     async def on_enter_PREPARE(self):
         print("Entered PREPARE")
+        print(self.)
 
         # wait for GPS signal - wrap synchronous function in executor, to avoid blocking
         loop = asyncio.get_running_loop()
@@ -135,4 +136,6 @@ class Drone(object):
     async def on_enter_RAPORT(self):
         print("Entered RAPORT")
 
-        self.kafka_connection.send_one(json.dumps(asdict(self.mission)))
+        mission_message = asdict(self.mission)
+        mission_message["type"] = "missionResult"
+        self.kafka_connection.send_one(json.dumps(mission_message))

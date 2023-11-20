@@ -10,7 +10,9 @@ def test_json_creation():
              {'parking_spot_id': 3, 'occupied': True},
              {'parking_spot_id': 4, 'occupied': False}]
     test_mission = Mission(int(time.time()) - 1000, int(time.time()), MissionStatus.FINISHED, spots)
-    print(json.dumps(asdict(test_mission)))
+    mission_message = asdict(test_mission)
+    mission_message["type"] = "missionResult"
+    print(json.dumps(mission_message))
 
     mission2 = Mission()
     print(mission2)
