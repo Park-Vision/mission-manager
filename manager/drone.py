@@ -60,7 +60,6 @@ class Drone(object):
 
     async def on_enter_PREPARE(self):
         print("Entered PREPARE")
-        print(self.)
 
         # wait for GPS signal - wrap synchronous function in executor, to avoid blocking
         loop = asyncio.get_running_loop()
