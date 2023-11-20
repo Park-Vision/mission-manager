@@ -1,6 +1,7 @@
 from geopy import distance
-from manager.mission.waypoint import Waypoint
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+
+from manager.mission.waypoint import Waypoint
 
 """
 Path making uses very efficient OR-Tools, google library written in C++,

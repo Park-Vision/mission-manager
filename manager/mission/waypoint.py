@@ -13,7 +13,9 @@ def process_parking_json(json: list) -> list[Waypoint]:
     """Convert parking spots from database to objects"""
     try:
         return [
-            Waypoint(spot["parkingSpotId"], spot["centerLatitude"], spot["centerLongitude"])
+            Waypoint(
+                spot["parkingSpotId"], spot["centerLatitude"], spot["centerLongitude"]
+            )
             for spot in json
         ]
     except TypeError:

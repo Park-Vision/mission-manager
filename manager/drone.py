@@ -4,16 +4,16 @@ import json
 import time
 from dataclasses import asdict
 
+from albatros.copter import Copter
+from albatros.enums import CopterFlightModes
 from transitions.extensions.asyncio import AsyncMachine
 
 from manager import config
-from albatros.copter import Copter
-from albatros.enums import CopterFlightModes
 from manager.api_requests.api_requests import get_parking_spots
-from manager.mission.path import create_path
-from manager.mission.waypoint import process_parking_json, Waypoint
-from manager.telemetry.kafka_connection import KafkaConnector
 from manager.mission.mission import Mission, MissionStatus
+from manager.mission.path import create_path
+from manager.mission.waypoint import Waypoint, process_parking_json
+from manager.telemetry.kafka_connection import KafkaConnector
 
 
 class DroneState(enum.Enum):
@@ -79,7 +79,9 @@ class Drone(object):
 
         # Set home point which will be used as starting location
         starting_position = self.albatros_copter.get_corrected_position()
-        self.home_point = Waypoint(lat=starting_position.lat * 1.0e-7, lon=starting_position.lon * 1.0e-7)
+        self.home_point = Waypoint(
+            lat=starting_position.lat * 1.0e-7, lon=starting_position.lon * 1.0e-7
+        )
 
         # Ser ardupilot flight mode
         self.albatros_copter.set_mode(CopterFlightModes.GUIDED)

@@ -1,21 +1,21 @@
 import asyncio
-import json
 
-from manager import config
 from confluent_kafka import Consumer, Producer
 
+from manager import config
+
 ssl_config = {
-   'metadata.broker.list': 'SSL://' + config.PARKVISION_SERVER,
-   "security.protocol": "SSL",
-   # CA certificate file for verifying the broker's certificate.
-   "ssl.ca.location": "ssl/ca-cert",
-   # Client's certificate
-   "ssl.certificate.location": "ssl/client_drone_client.pem",
-   # Client's key
-   "ssl.key.location": "ssl/client_drone_client_v2.key",
-   # Key password, if any.
-   "ssl.key.password": "maciek",
-   "ssl.endpoint.identification.algorithm": "none",
+    "metadata.broker.list": "SSL://" + config.PARKVISION_SERVER,
+    "security.protocol": "SSL",
+    # CA certificate file for verifying the broker's certificate.
+    "ssl.ca.location": "ssl/ca-cert",
+    # Client's certificate
+    "ssl.certificate.location": "ssl/client_drone_client.pem",
+    # Client's key
+    "ssl.key.location": "ssl/client_drone_client_v2.key",
+    # Key password, if any.
+    "ssl.key.password": "maciek",
+    "ssl.endpoint.identification.algorithm": "none",
 }
 
 
@@ -25,10 +25,10 @@ class KafkaConnector:
         prod_config.update(ssl_config)
 
         con_config = {
-                "bootstrap.servers": server,
-                "group.id": "drones",
-                "auto.offset.reset": "earliest",
-                }
+            "bootstrap.servers": server,
+            "group.id": "drones",
+            "auto.offset.reset": "earliest",
+        }
         con_config.update(ssl_config)
 
         self.producer = Producer(prod_config)
