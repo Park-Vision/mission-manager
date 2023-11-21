@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from confluent_kafka import Consumer, Producer
 
@@ -75,15 +76,15 @@ class KafkaConnector:
                 print("Consumer error: {}".format(msg.error()))
                 continue
 
-            msg_value = msg.value().decode("utf-8")
-            print("Received message: {}".format(msg_value))
+            msg_value_dict = json.loads(msg.value().decode("utf-8"))
+            print("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
             # assigned to command content
             try:
-                self.command_callbacks[msg_value]()
+                self.command_callbacks[msg_value_dict["command"]]()
             except KeyError:
-                print(f"Invalid command from operator: {msg_value}")
+                print(f"Invalid command from operator: {msg_value_dict}")
                 continue
 
     def close_consumer(self):

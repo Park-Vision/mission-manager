@@ -56,16 +56,19 @@ class Drone(object):
 
     def send_mission_stage(self):
         """Send current stage enum value to broker"""
-        message = {"type": "stage", "stage": int(self.state.value)}
-        print(message)
-        self.kafka_connection.send_one(json.dumps(message))
+        if self.use_kafka:
+            message = {"type": "stage", "stage": int(self.state.value)}
+            self.kafka_connection.send_one(json.dumps(message))
 
     async def process_arducopter_messages(self):
-        # TODO real implementation - implement albatros
         while True:
+            self.send_mission_stage()
+            # TODO real implementation - implement albatros
+
             position = self.albatros_copter.get_corrected_position()
             # print(asdict(position))
             await asyncio.sleep(0.5)
+
             if self.use_kafka:
                 self.kafka_connection.send_one(json.dumps(asdict(position)))
 
@@ -161,3 +164,5 @@ class Drone(object):
         mission_message = asdict(self.mission)
         mission_message["type"] = "missionResult"
         self.kafka_connection.send_one(json.dumps(mission_message))
+
+        await self.to_PREPARE()
