@@ -6,8 +6,10 @@ from dataclasses import asdict
 
 from albatros.copter import Copter
 from albatros.enums import CopterFlightModes
+from albatros.nav.position import PositionGPS, distance_between_points
 from transitions.extensions.asyncio import AsyncMachine
 
+from manager.config import PHOTO_ALTITUDE
 from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
 from manager.mission.waypoint import Waypoint, process_parking_message
@@ -60,6 +62,23 @@ class Drone(object):
         if self.use_kafka:
             message = {"type": "stage", "stage": int(self.state.value)}
             self.kafka_connection.send_one(json.dumps(message))
+
+    async def fly_to_single_point(self, waypoint: Waypoint) -> None:
+        # because mavlink sends coordinates in scaled form as integers
+        # we use function which scales WGS84 coordinates by 7 decimal places (degE7)
+        target = PositionGPS.from_float_position(lat=waypoint.position[0], lon=waypoint.position[1], alt=PHOTO_ALTITUDE)
+
+        self.albatros_copter.fly_to_gps_position(target.lat, target.lon, target.alt)
+
+        while True:
+            current_position = self.albatros_copter.get_corrected_position()
+            dist = distance_between_points(current_position, target)
+
+            print(f"Distance to target: {dist} m")
+            if dist < 0.25: # tolerance
+                return
+            await asyncio.sleep(1)
+
 
     async def process_arducopter_messages(self):
         while True:
@@ -135,8 +154,13 @@ class Drone(object):
 
     async def on_enter_FLIGHT(self):
         print("Entered FLIGHT")
-        await self.to_RETURN()
         self.send_mission_stage()
+
+        for waypoint in self.waypoints:
+            await self.fly_to_single_point(waypoint)
+
+        await self.to_RETURN()
+
 
     async def on_enter_RETURN(self):
         print("Entered RETURN")
@@ -165,4 +189,5 @@ class Drone(object):
         mission_message["type"] = "missionResult"
         self.kafka_connection.send_one(json.dumps(mission_message))
 
+        self.ready_for_takeoff = False
         await self.to_PREPARE()
