@@ -27,12 +27,13 @@ correct_order_2 = [
     LANDING_POINT,
 ]
 
-@pytest.mark.parametrize('correct_order', [correct_order_1, correct_order_2])
+
+@pytest.mark.parametrize("correct_order", [correct_order_1, correct_order_2])
 def test_path(correct_order):
     correct_order_waypoints = [
         Waypoint(0, point[0], point[1]) for point in correct_order
     ]
-    
+
     # Randomize order
     input_points = [p for p in correct_order if p != LANDING_POINT]
     shuffle(input_points)

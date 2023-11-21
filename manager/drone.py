@@ -8,11 +8,9 @@ from albatros.copter import Copter
 from albatros.enums import CopterFlightModes
 from transitions.extensions.asyncio import AsyncMachine
 
-from manager import config
-from manager.api_requests.api_requests import get_parking_spots
 from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
-from manager.mission.waypoint import Waypoint, process_parking_json
+from manager.mission.waypoint import Waypoint, process_parking_message
 from manager.telemetry.kafka_connection import KafkaConnector
 
 
@@ -38,6 +36,7 @@ class Drone(object):
         self.ready_for_takeoff = False
         self.home_point = Waypoint()
         self.mission = Mission()
+        self.waypoints = []
 
         if self.use_kafka:
             command_callbacks = {
@@ -46,11 +45,13 @@ class Drone(object):
             }
             self.kafka_connection = KafkaConnector("localhost:9092", command_callbacks)
 
-    def handle_start(self):
+    def handle_start(self, msg: dict):
         """ "React to 'start' signal sent from operator - ready for takeoff"""
+        self.waypoints = process_parking_message(msg)
+
         self.ready_for_takeoff = True
 
-    def handle_stop(self):
+    def handle_stop(self, msg: dict):
         """React to 'stop' signal sent from operator - immediately return home"""
         self.to_RETURN()
 
@@ -107,9 +108,8 @@ class Drone(object):
         self.send_mission_stage()
 
         # Create path from waypoints
-        waypoints = process_parking_json(get_parking_spots(config.DRONE_ID))
-        waypoints.insert(0, self.home_point)
-        self.path = create_path(waypoints)
+        self.waypoints.insert(0, self.home_point)
+        self.path = create_path(self.waypoints)
         await self.to_TAKEOFF()
 
     async def on_enter_TAKEOFF(self):

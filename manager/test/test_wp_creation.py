@@ -1,17 +1,19 @@
-from manager.mission.waypoint import Waypoint, process_parking_json
+from manager.mission.waypoint import Waypoint, process_parking_message
 
-input = [
-    {
-        "parkingSpotId": 1,
-        "centerLatitude": 51.118661117080116,
-        "centerLongitude": 16.99027379987549,
-    },
-    {
-        "parkingSpotId": 2,
-        "centerLatitude": 51.11861444757546,
-        "centerLongitude": 16.990350912447425,
-    },
-]
+input = {
+    "cords": [
+        {
+            "parkingSpotId": 1,
+            "centerLatitude": 51.118661117080116,
+            "centerLongitude": 16.99027379987549,
+        },
+        {
+            "parkingSpotId": 2,
+            "centerLatitude": 51.11861444757546,
+            "centerLongitude": 16.990350912447425,
+        },
+    ]
+}
 
 correct_output = [
     Waypoint(1, 51.118661117080116, 16.99027379987549),
@@ -20,7 +22,7 @@ correct_output = [
 
 
 def test_wp():
-    waypoints = process_parking_json(input)
+    waypoints = process_parking_message(input)
     assert waypoints == correct_output
 
 

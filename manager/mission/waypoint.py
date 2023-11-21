@@ -9,14 +9,14 @@ class Waypoint:
         return self.position == other.position
 
 
-def process_parking_json(json: list) -> list[Waypoint]:
-    """Convert parking spots from database to objects"""
+def process_parking_message(msg: dict) -> list[Waypoint]:
+    """Convert parking spots from kafka message to objects"""
     try:
         return [
             Waypoint(
                 spot["parkingSpotId"], spot["centerLatitude"], spot["centerLongitude"]
             )
-            for spot in json
+            for spot in msg["cords"]
         ]
     except TypeError:
         print("No valid waypoints to visit")

@@ -82,7 +82,7 @@ class KafkaConnector:
             # react to command, by executing drone function
             # assigned to command content
             try:
-                self.command_callbacks[msg_value_dict["command"]]()
+                self.command_callbacks[msg_value_dict["command"]](msg_value_dict)
             except KeyError:
                 print(f"Invalid command from operator: {msg_value_dict}")
                 continue
