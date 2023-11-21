@@ -1,21 +1,22 @@
 import asyncio
 import json
 
-from manager import config
 from confluent_kafka import Consumer, Producer
 
+from manager import config
+
 ssl_config = {
-   'metadata.broker.list': 'SSL://' + config.PARKVISION_SERVER,
-   "security.protocol": "SSL",
-   # CA certificate file for verifying the broker's certificate.
-   "ssl.ca.location": "ssl/ca-cert",
-   # Client's certificate
-   "ssl.certificate.location": "ssl/client_drone_client.pem",
-   # Client's key
-   "ssl.key.location": "ssl/client_drone_client_v2.key",
-   # Key password, if any.
-   "ssl.key.password": "maciek",
-   "ssl.endpoint.identification.algorithm": "none",
+    "metadata.broker.list": "SSL://" + config.PARKVISION_SERVER,
+    "security.protocol": "SSL",
+    # CA certificate file for verifying the broker's certificate.
+    "ssl.ca.location": "ssl/ca-cert",
+    # Client's certificate
+    "ssl.certificate.location": "ssl/client_drone_client.pem",
+    # Client's key
+    "ssl.key.location": "ssl/client_drone_client_v2.key",
+    # Key password, if any.
+    "ssl.key.password": "maciek",
+    "ssl.endpoint.identification.algorithm": "none",
 }
 
 
@@ -25,10 +26,10 @@ class KafkaConnector:
         prod_config.update(ssl_config)
 
         con_config = {
-                "bootstrap.servers": server,
-                "group.id": "drones",
-                "auto.offset.reset": "earliest",
-                }
+            "bootstrap.servers": server,
+            "group.id": "drones",
+            "auto.offset.reset": "earliest",
+        }
         con_config.update(ssl_config)
 
         self.producer = Producer(prod_config)
@@ -62,8 +63,7 @@ class KafkaConnector:
 
     async def consume_messages(self):
         """Async consume messages on assigned topic, when message is received, callback"""
-        # self.consumer.subscribe([f"drone-{config.DRONE_ID}"]) # TODO change topic
-        self.consumer.subscribe([f"drones-info"])
+        self.consumer.subscribe([f"drone-{config.DRONE_ID}"])
         print("Subscribed to drone topic")
 
         while True:
@@ -76,20 +76,15 @@ class KafkaConnector:
                 print("Consumer error: {}".format(msg.error()))
                 continue
 
-            msg_value = msg.value().decode("utf-8")
-            print("Received message: {}".format(msg_value))
-
-            # TODO remove------
-            if msg_value == "start":
-                self.send_one(json.dumps({"Lat": 51, "Lon": 17}))
-            # end to remove----
+            msg_value_dict = json.loads(msg.value().decode("utf-8"))
+            print("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
             # assigned to command content
             try:
-                self.command_callbacks[msg_value]()
+                self.command_callbacks[msg_value_dict["command"]]()
             except KeyError:
-                print(f"Invalid command from operator: {msg_value}")
+                print(f"Invalid command from operator: {msg_value_dict}")
                 continue
 
     def close_consumer(self):

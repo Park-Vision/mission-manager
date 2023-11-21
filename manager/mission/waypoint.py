@@ -11,9 +11,13 @@ class Waypoint:
 
 def process_parking_json(json: list) -> list[Waypoint]:
     """Convert parking spots from database to objects"""
-    waypoints = [
-        Waypoint(spot["parkingSpotId"], spot["centerLatitude"], spot["centerLongitude"])
-        for spot in json
-    ]
-
-    return waypoints
+    try:
+        return [
+            Waypoint(
+                spot["parkingSpotId"], spot["centerLatitude"], spot["centerLongitude"]
+            )
+            for spot in json
+        ]
+    except TypeError:
+        print("No valid waypoints to visit")
+        return []

@@ -1,4 +1,4 @@
 #!/usr/bin/bash
-isort mission-manager
-black mission-manager
-pylama mission-manager
+isort manager
+black manager
+pylama manager
