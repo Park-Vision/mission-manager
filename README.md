@@ -12,10 +12,13 @@ With kafka for linux- works on my machine - kafka needs to be installed in a cer
 
 # Docker run
 
-Development docker:
-```docker-compose up --build```
-or
-```docker-compose up```
+With simulation:
+Build containers:
+```docker build . -t mission-manager```
+```docker build simulation -t ardupilot-sitl-parkvision```
+
+Run:
+```docker compose up```
 
 # Tests
 To run tests see run_test.sh
