@@ -14,7 +14,7 @@ from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
 from manager.mission.waypoint import Waypoint, process_parking_message
 from manager.telemetry.kafka_connection import KafkaConnector
-
+from manager.decision.mock_decision import MockDecision
 
 class DroneState(enum.Enum):
     INITIAL = 0
@@ -39,6 +39,7 @@ class Drone(object):
         self.home_point = Waypoint()
         self.mission = Mission()
         self.waypoints = []
+        self.decision_module = MockDecision()
 
         if self.use_kafka:
             command_callbacks = {
@@ -76,6 +77,8 @@ class Drone(object):
 
             print(f"Distance to target: {dist} m")
             if dist < 0.25: # tolerance
+                # start work to establish whether parking spot is free
+                await self.decision_module.decide(waypoint)
                 return
             await asyncio.sleep(1)
 
@@ -184,6 +187,13 @@ class Drone(object):
     async def on_enter_RAPORT(self):
         print("Entered RAPORT")
         self.send_mission_stage()
+
+        # Wait until all of the spots have been processed
+        while len(self.decision_module.free_spots) < len(self.waypoints) - 1:   # start pos not counted
+            await asyncio.sleep(1)
+
+        # Set free/taken spots in mission to be converted to message, remove start post
+        self.mission.free_spots = [spot for spot in self.decision_module.free_spots if spot["parking_spot_id"] != -1]
 
         mission_message = asdict(self.mission)
         mission_message["type"] = "missionResult"
