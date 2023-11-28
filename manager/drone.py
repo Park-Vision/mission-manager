@@ -34,7 +34,7 @@ class Drone(object):
             model=self, states=DroneState, initial=DroneState.INITIAL
         )
         self.path = None
-        self.albatros_copter = Copter()
+        self.albatros_copter = None
         self.use_kafka = args.kafka
         self.ready_for_takeoff = False
         self.home_point = Waypoint()
@@ -119,6 +119,8 @@ class Drone(object):
         print("Entered PREPARE")
         self.send_mission_stage()
 
+        self.albatros_copter = Copter()
+
         # wait for GPS signal - wrap synchronous function in executor, to avoid blocking
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.albatros_copter.wait_gps_fix)
@@ -165,7 +167,10 @@ class Drone(object):
         target_alt = config.PHOTO_ALTITUDE
         # TODO probably fix asyncio here
         self.albatros_copter.arm()
-        self.albatros_copter.takeoff(target_alt)
+
+        while not self.albatros_copter.takeoff(target_alt):
+            print("Attempting takeoff")
+
         while (
             current_altitude := self.albatros_copter.get_corrected_position().alt
         ) < target_alt - 0.25:  # tolerance
@@ -208,6 +213,9 @@ class Drone(object):
         print("Entered RAPORT")
         self.send_mission_stage()
 
+        self.ready_for_takeoff = False
+        self.albatros_copter.disarm()
+
         # Wait until all of the spots have been processed
         while len(self.decision_module.free_spots) < len(self.waypoints) - 1:   # start pos not counted
             await asyncio.sleep(1)
@@ -219,5 +227,6 @@ class Drone(object):
         mission_message["type"] = "missionResult"
         self.kafka_connection.send_one(json.dumps(mission_message))
 
-        self.ready_for_takeoff = False
+        self.mission = Mission()
+
         await self.to_PREPARE()
