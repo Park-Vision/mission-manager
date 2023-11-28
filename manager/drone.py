@@ -168,8 +168,13 @@ class Drone(object):
         # TODO probably fix asyncio here
         self.albatros_copter.arm()
 
-        while not self.albatros_copter.takeoff(target_alt):
-            print("Attempting takeoff")
+        loop = asyncio.get_running_loop()
+        while self.albatros_copter.get_corrected_position().alt < 1:
+            try:
+                await loop.run_in_executor(None, self.albatros_copter.takeoff, target_alt)
+            except TimeoutError:
+                print("Failed takeoff attempt")
+            await asyncio.sleep(0.25)
 
         while (
             current_altitude := self.albatros_copter.get_corrected_position().alt
@@ -214,6 +219,8 @@ class Drone(object):
         self.send_mission_stage()
 
         self.ready_for_takeoff = False
+        self.albatros_copter.set_mode(CopterFlightModes.STABILIZE)
+        await asyncio.sleep(1)
         self.albatros_copter.disarm()
 
         # Wait until all of the spots have been processed
