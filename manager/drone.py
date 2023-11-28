@@ -9,12 +9,13 @@ from albatros.enums import CopterFlightModes
 from albatros.nav.position import PositionGPS, distance_between_points
 from transitions.extensions.asyncio import AsyncMachine
 
-from manager.config import PHOTO_ALTITUDE
+from manager import config
 from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
 from manager.mission.waypoint import Waypoint, process_parking_message
 from manager.telemetry.kafka_connection import KafkaConnector
 from manager.decision.mock_decision import MockDecision
+from manager.telemetry.sent_timestamps import SentTimestamps
 
 class DroneState(enum.Enum):
     INITIAL = 0
@@ -67,7 +68,7 @@ class Drone(object):
     async def fly_to_single_point(self, waypoint: Waypoint) -> None:
         # because mavlink sends coordinates in scaled form as integers
         # we use function which scales WGS84 coordinates by 7 decimal places (degE7)
-        target = PositionGPS.from_float_position(lat=waypoint.position[0], lon=waypoint.position[1], alt=PHOTO_ALTITUDE)
+        target = PositionGPS.from_float_position(lat=waypoint.position[0], lon=waypoint.position[1], alt=config.PHOTO_ALTITUDE)
 
         self.albatros_copter.fly_to_gps_position(target.lat, target.lon, target.alt)
 
@@ -84,16 +85,35 @@ class Drone(object):
 
 
     async def process_arducopter_messages(self):
+        if not self.use_kafka:
+            return
+
+        initial_time = time.time()
+        sent_times = SentTimestamps(initial_time, initial_time, initial_time, initial_time)
+
         while True:
-            self.send_mission_stage()
-            # TODO real implementation - implement albatros
+            iteration_time = time.time()
 
-            position = self.albatros_copter.get_corrected_position()
-            # print(asdict(position))
-            await asyncio.sleep(0.5)
+            if iteration_time - sent_times.stage > config.STAGE_SEND_INTERVAL:
+                sent_times.stage = iteration_time
+                self.send_mission_stage()
 
-            if self.use_kafka:
+            if iteration_time - sent_times.position > config.POSITION_SEND_INTERVAL:
+                sent_times.position = iteration_time
+                position = self.albatros_copter.get_corrected_position()
                 self.kafka_connection.send_one(json.dumps(asdict(position)))
+
+            if iteration_time - sent_times.sys_status > config.BAT_SEND_INTERVAL:
+                sent_times.sys_status = iteration_time
+                sys_status = self.albatros_copter.telem.data.sys_status
+                self.kafka_connection.send_one(json.dumps(dict(sys_status)))
+
+            if iteration_time - sent_times.gps_status > config.SAT_SEND_INTERVAL:
+                sent_times.gps_status = iteration_time
+                gps_status = self.albatros_copter.telem.data.gps_raw_int
+                self.kafka_connection.send_one(json.dumps(dict(gps_status)))
+
+            await asyncio.sleep(0.1)
 
     async def on_enter_PREPARE(self):
         print("Entered PREPARE")
@@ -142,7 +162,7 @@ class Drone(object):
         self.mission.start_timestamp = int(time.time())
         self.mission.status = MissionStatus.ONGOING
 
-        target_alt = 15
+        target_alt = config.PHOTO_ALTITUDE
         # TODO probably fix asyncio here
         self.albatros_copter.arm()
         self.albatros_copter.takeoff(target_alt)
