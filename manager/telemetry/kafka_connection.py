@@ -6,6 +6,7 @@ import time
 from confluent_kafka import Consumer, Producer
 
 from manager import config
+from manager.telemetry.encryption import AESCipher
 
 ssl_config = {
     "metadata.broker.list": "SSL://" + config.PARKVISION_SERVER,
@@ -37,6 +38,7 @@ class KafkaConnector:
         self.producer = Producer(prod_config)
         self.consumer = Consumer(con_config)
         self.command_callbacks = command_callbacks
+        self.cipher = AESCipher(config.DRONE_KEY)
 
     def delivery_report(self, err, msg):
         """Called once for each message produced to indicate delivery result.
@@ -80,8 +82,12 @@ class KafkaConnector:
                 logging.error("Consumer error: {}".format(msg.error()))
                 continue
 
-            msg_value_dict = json.loads(msg.value().decode("utf-8"))
-            logging.debug("Received message: " + str(msg_value_dict))
+            decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
+            for i in range(10):
+                print(decrypted)
+
+            msg_value_dict = json.loads(decrypted)
+            print("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
             # assigned to command content
