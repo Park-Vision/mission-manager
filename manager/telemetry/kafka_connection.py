@@ -1,9 +1,11 @@
 import asyncio
 import json
+import time
 
 from confluent_kafka import Consumer, Producer
 
 from manager import config
+from manager.telemetry.encryption import AESCipher
 
 ssl_config = {
     "metadata.broker.list": "SSL://" + config.PARKVISION_SERVER,
@@ -35,6 +37,7 @@ class KafkaConnector:
         self.producer = Producer(prod_config)
         self.consumer = Consumer(con_config)
         self.command_callbacks = command_callbacks
+        self.cipher = AESCipher(config.DRONE_KEY)
 
     def delivery_report(self, err, msg):
         """Called once for each message produced to indicate delivery result.
@@ -42,7 +45,8 @@ class KafkaConnector:
         if err is not None:
             print("Message delivery failed: {}".format(err))
         else:
-            print("Message delivered to {} [{}]".format(msg.topic(), msg.partition()))
+            pass
+            # print("Message delivered to {} [{}] at time {}".format(msg.topic(), msg.partition(), time.time()))
 
     def send_one(self, data):
         # Trigger any available delivery report callbacks from previous produce() calls
@@ -76,7 +80,11 @@ class KafkaConnector:
                 print("Consumer error: {}".format(msg.error()))
                 continue
 
-            msg_value_dict = json.loads(msg.value().decode("utf-8"))
+            decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
+            for i in range(10):
+                print(decrypted)
+
+            msg_value_dict = json.loads(decrypted)
             print("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
