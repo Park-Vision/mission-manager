@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 from confluent_kafka import Consumer, Producer
 
@@ -40,9 +41,9 @@ class KafkaConnector:
         """Called once for each message produced to indicate delivery result.
         Triggered by poll() or flush()."""
         if err is not None:
-            print("Message delivery failed: {}".format(err))
+            print(f"Message delivery failed: {err}")
         else:
-            print("Message delivered to {} [{}]".format(msg.topic(), msg.partition()))
+            print(f"Message delivered to {msg.topic()} [{msg.partition()}] at time {time.time()}")
 
     def send_one(self, data):
         # Trigger any available delivery report callbacks from previous produce() calls
