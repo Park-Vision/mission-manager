@@ -49,15 +49,15 @@ class Drone(object):
             }
             self.kafka_connection = KafkaConnector("localhost:9092", command_callbacks)
 
-    def handle_start(self, msg: dict):
+    async def handle_start(self, msg: dict):
         """ "React to 'start' signal sent from operator - ready for takeoff"""
         self.waypoints = process_parking_message(msg)
 
         self.ready_for_takeoff = True
 
-    def handle_stop(self, msg: dict):
+    async def handle_stop(self, msg: dict):
         """React to 'stop' signal sent from operator - immediately return home"""
-        self.to_RETURN()
+        await self.to_RETURN()
 
     def send_mission_stage(self):
         """Send current stage enum value to broker"""
