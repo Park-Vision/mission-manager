@@ -21,28 +21,23 @@ class AESCipher(object):
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         return base64.b64encode(iv + cipher.encrypt(raw.encode()))
 
-    def decrypt(self, enc: str):
-        parts = enc.split(':')
+    # def decrypt(self, enc: str):
+    #     parts = enc.split(':')
+    #     iv = base64.b64decode(parts[0])
+    #     encrypted_bytes = base64.b64decode(parts[1])
+        
+    #     cipher = AES.new(self.key, AES.MODE_CBC, iv)
+    #     return AESCipher._unpad(cipher.decrypt(encrypted_bytes)).decode('utf-8')
+
+    def decrypt(self, encrypted_message):
+        parts = encrypted_message.split(":")
         iv = base64.b64decode(parts[0])
         encrypted_bytes = base64.b64decode(parts[1])
-        
-        cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return AESCipher._unpad(cipher.decrypt(encrypted_bytes)).decode('utf-8')
 
-    # def decrypt_message(encrypted_message, key):
-    #     parts = encrypted_message.split(":")
-    #     iv = b64decode(parts[0])
-    #     encrypted_bytes = b64decode(parts[1])
+        cipher = AES.new(base64.b64decode(self.key), AES.MODE_CBC, iv=iv)
+        decrypted_bytes = cipher.decrypt(encrypted_bytes)
 
-    #     cipher = Cipher(
-    #         algorithms.AES(b64decode(key)),
-    #         modes.CFB(iv),
-    #         backend=default_backend()
-    #     )
-    #     decryptor = cipher.decryptor()
-    #     decrypted_bytes = decryptor.update(encrypted_bytes) + decryptor.finalize()
-
-    #     return decrypted_bytes.decode('utf-8')
+        return decrypted_bytes.decode('utf-8').strip()
 
     def _pad(self, s):
         return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
