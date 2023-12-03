@@ -82,6 +82,7 @@ class KafkaConnector:
                 logging.error("Consumer error: {}".format(msg.error()))
                 continue
 
+            print(msg.value())
             decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
             for i in range(10):
                 print(decrypted)
