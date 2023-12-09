@@ -1,5 +1,7 @@
 # Specific in this project
 manager/map.html
+drone_photos/*
+!drone_photos/example_photos
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
