@@ -27,8 +27,10 @@ correct_order_2 = [
     LANDING_POINT,
 ]
 
+correct_orders = [correct_order_1, correct_order_2]
 
-@pytest.mark.parametrize("correct_order", [correct_order_1, correct_order_2])
+
+@pytest.mark.parametrize("correct_order", correct_orders)
 def test_path(correct_order):
     correct_order_waypoints = [
         Waypoint(0, point[0], point[1]) for point in correct_order
