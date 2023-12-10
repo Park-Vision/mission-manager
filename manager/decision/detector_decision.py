@@ -7,6 +7,7 @@ from ultralytics import YOLO
 from manager.decision.camera.camera import Camera
 from manager.decision.decision import Decision
 from manager.mission.waypoint import Waypoint
+from manager import config
 
 ImageDimensions = namedtuple("ImageDimensions", "width height center_x center_y")
 
@@ -30,17 +31,17 @@ class DetectorDecision(Decision):
     ) -> bool:
         """Returns true if detected object bounding box takes up defined proportion of screen"""
         return (
-            abs(box_xyxy[0] - box_xyxy[2]) > image_dimensions.width * 0.1
-            and abs(box_xyxy[1] - box_xyxy[3]) > image_dimensions.height * 0.1
+            abs(box_xyxy[0] - box_xyxy[2]) > image_dimensions.width * config.OBJECT_SIZE_PROPORTION_THRESHOLD_X
+            and abs(box_xyxy[1] - box_xyxy[3]) > image_dimensions.height * config.OBJECT_SIZE_PROPORTION_THRESHOLD_Y
         )
 
-    def object_is_central(self, box_xyxy, image_dimensions: ImageDimensions) -> bool:
+    def object_is_central(self, box_xyxy: ndarray, image_dimensions: ImageDimensions) -> bool:
         """Returns true if object bounding box center is within a defined distance to img center"""
         return (
             abs(((box_xyxy[0] + box_xyxy[2]) / 2) - image_dimensions.center_x)
-            < image_dimensions.width * 0.25
+            < image_dimensions.width * config.PHOTO_CENTER_DISTANCE_THRESHOLD_X
             and abs(((box_xyxy[1] + box_xyxy[3]) / 2) - image_dimensions.center_y)
-            < image_dimensions.height * 0.25
+            < image_dimensions.height * config.PHOTO_CENTER_DISTANCE_THRESHOLD_Y
         )
 
     async def decide(self, wp: Waypoint) -> bool:
