@@ -7,7 +7,6 @@ from manager.mission.waypoint import Waypoint
 
 LANDING_POINT = (51.11016, 17.05963)
 
-
 correct_order_1 = [
     LANDING_POINT,
     (51.11016, 17.05936),

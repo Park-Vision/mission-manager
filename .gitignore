@@ -2,6 +2,7 @@
 manager/map.html
 drone_photos/*
 !drone_photos/example_photos
+detection_result.jpg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
