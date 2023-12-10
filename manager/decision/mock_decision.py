@@ -10,7 +10,7 @@ class MockDecision(Decision):
 
     def __init__(self) -> None:
         super().__init__()
-    
+
     async def decide(self, wp: Waypoint) -> bool:
         # simulate processing time
         await asyncio.sleep(1)

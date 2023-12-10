@@ -44,7 +44,9 @@ class KafkaConnector:
         if err is not None:
             logging.error(f"Message delivery failed: {err}")
         else:
-            logging.debug(f"Message delivered to {msg.topic()} [{msg.partition()}] at time {time.time()}")
+            logging.debug(
+                f"Message delivered to {msg.topic()} [{msg.partition()}] at time {time.time()}"
+            )
 
     def send_one(self, data):
         # Trigger any available delivery report callbacks from previous produce() calls

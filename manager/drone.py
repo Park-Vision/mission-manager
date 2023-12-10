@@ -10,12 +10,13 @@ from albatros.nav.position import PositionGPS, distance_between_points
 from transitions.extensions.asyncio import AsyncMachine
 
 from manager import config
+from manager.decision.mock_decision import MockDecision
 from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
 from manager.mission.waypoint import Waypoint, process_parking_message
 from manager.telemetry.kafka_connection import KafkaConnector
-from manager.decision.mock_decision import MockDecision
 from manager.telemetry.sent_timestamps import SentTimestamps
+
 
 class DroneState(enum.Enum):
     INITIAL = 0
@@ -68,7 +69,11 @@ class Drone(object):
     async def fly_to_single_point(self, waypoint: Waypoint) -> None:
         # because mavlink sends coordinates in scaled form as integers
         # we use function which scales WGS84 coordinates by 7 decimal places (degE7)
-        target = PositionGPS.from_float_position(lat=waypoint.position[0], lon=waypoint.position[1], alt=config.PHOTO_ALTITUDE)
+        target = PositionGPS.from_float_position(
+            lat=waypoint.position[0],
+            lon=waypoint.position[1],
+            alt=config.PHOTO_ALTITUDE,
+        )
 
         self.albatros_copter.fly_to_gps_position(target.lat, target.lon, target.alt)
 
@@ -83,13 +88,14 @@ class Drone(object):
                 return
             await asyncio.sleep(1)
 
-
     async def process_arducopter_messages(self):
         if not self.use_kafka:
             return
 
         initial_time = time.time()
-        sent_times = SentTimestamps(initial_time, initial_time, initial_time, initial_time)
+        sent_times = SentTimestamps(
+            initial_time, initial_time, initial_time, initial_time
+        )
 
         while True:
             iteration_time = time.time()
@@ -171,7 +177,9 @@ class Drone(object):
         loop = asyncio.get_running_loop()
         while self.albatros_copter.get_corrected_position().alt < 1:
             try:
-                await loop.run_in_executor(None, self.albatros_copter.takeoff, target_alt)
+                await loop.run_in_executor(
+                    None, self.albatros_copter.takeoff, target_alt
+                )
             except TimeoutError:
                 print("Failed takeoff attempt")
             await asyncio.sleep(0.25)
@@ -193,7 +201,6 @@ class Drone(object):
             await self.fly_to_single_point(waypoint)
 
         await self.to_RETURN()
-
 
     async def on_enter_RETURN(self):
         print("Entered RETURN")
@@ -224,11 +231,17 @@ class Drone(object):
         self.albatros_copter.disarm()
 
         # Wait until all of the spots have been processed
-        while len(self.decision_module.free_spots) < len(self.waypoints) - 1:   # start pos not counted
+        while (
+            len(self.decision_module.free_spots) < len(self.waypoints) - 1
+        ):  # start pos not counted
             await asyncio.sleep(1)
 
         # Set free/taken spots in mission to be converted to message, remove start post
-        self.mission.free_spots = [spot for spot in self.decision_module.free_spots if spot["parking_spot_id"] != -1]
+        self.mission.free_spots = [
+            spot
+            for spot in self.decision_module.free_spots
+            if spot["parking_spot_id"] != -1
+        ]
 
         mission_message = asdict(self.mission)
         mission_message["type"] = "missionResult"
