@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-import datetime
+from datetime import datetime
 import logging
 import os
 
 class Camera(ABC):
     def __init__(self) -> None:
-        self.save_path = "./drone_photos/" + datetime.datetime.today().strftime(
+        self.save_path = "./drone_photos/" + datetime.today().strftime(
             "%H:%M_%Y-%m-%d"
         )
         self.create_save_directory()
