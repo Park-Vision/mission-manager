@@ -82,15 +82,15 @@ class KafkaConnector:
                 logging.error("Consumer error: {}".format(msg.error()))
                 continue
 
-            print(str(msg.value()))
-            print(msg.value())
-            logging.debug(str(msg))
             decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
+            newDecrypted2 = str(fr'{decrypted}')
 
-            print(decrypted)
-            # check why decrypted != newDecrypted
-            newDecrypted = '{"cords":[],"command":"start"}'
-            msg_value_dict = json.loads(newDecrypted)
+            end_of_json = newDecrypted2.find('}')
+            
+            if end_of_json != -1:
+                newDecrypted2 = newDecrypted2[:end_of_json + 1]
+
+            msg_value_dict = json.loads(newDecrypted2)
             logging.debug("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
