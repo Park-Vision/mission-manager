@@ -2,6 +2,7 @@ import base64
 import hashlib
 from Crypto import Random
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
 from base64 import b64decode
 # from cryptography.hazmat.backends import default_backend
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -13,7 +14,7 @@ class AESCipher(object):
 
     def __init__(self, key):
         self.bs = AES.block_size
-        self.key = hashlib.sha256(key.encode()).digest()
+        self.key = key
 
     def encrypt(self, raw):
         raw = self._pad(raw)
@@ -30,14 +31,25 @@ class AESCipher(object):
     #     return AESCipher._unpad(cipher.decrypt(encrypted_bytes)).decode('utf-8')
 
     def decrypt(self, encrypted_message):
-        parts = encrypted_message.split(":")
-        iv = base64.b64decode(parts[0])
-        encrypted_bytes = base64.b64decode(parts[1])
+        encrypted_message = str(encrypted_message)
+        iv, encrypted_data = encrypted_message.split(':')
+        print(iv)
+        print(encrypted_data)
+        print(self.key)
 
-        cipher = AES.new(base64.b64decode(self.key), AES.MODE_CBC, iv=iv)
-        decrypted_bytes = cipher.decrypt(encrypted_bytes)
+        cipher = AES.new(base64.b64decode(self.key), AES.MODE_CBC, iv=base64.b64decode(iv))
 
-        return decrypted_bytes.decode('utf-8').strip()
+        decrypted_message = cipher.decrypt(base64.b64decode(encrypted_data))
+
+        return decrypted_message.decode('utf-8')
+
+
+    def unpad_message(self, message):
+        padding_size = message[-1]
+        if padding_size > 0:
+            return message[:-padding_size]
+        return message
+
 
     def _pad(self, s):
         return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
