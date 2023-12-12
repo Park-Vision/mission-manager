@@ -48,7 +48,7 @@ class Drone(object):
                 "start": self.handle_start,
                 "stop": self.handle_stop,
             }
-            self.kafka_connection = KafkaConnector("localhost:9092", command_callbacks)
+            self.kafka_connection = KafkaConnector("localhost:29092", command_callbacks)
 
     async def handle_start(self, msg: dict):
         """ "React to 'start' signal sent from operator - ready for takeoff"""

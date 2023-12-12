@@ -1,5 +1,5 @@
 DRONE_ID = 3
-DRONE_KEY = "1OrbVOiYwvh6JaIOkZN8Nw=="
+DRONE_KEY = "rL/7mm7+p8neu4cyJVD80w=="
 PARKVISION_SERVER = "127.0.0.1:29092"
 
 # communication frequency
