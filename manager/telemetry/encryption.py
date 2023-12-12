@@ -33,22 +33,12 @@ class AESCipher(object):
     def decrypt(self, encrypted_message):
         encrypted_message = str(encrypted_message)
         iv, encrypted_data = encrypted_message.split(':')
-        print(iv)
-        print(encrypted_data)
-        print(self.key)
 
         cipher = AES.new(base64.b64decode(self.key), AES.MODE_CBC, iv=base64.b64decode(iv))
 
         decrypted_message = cipher.decrypt(base64.b64decode(encrypted_data))
 
         return decrypted_message.decode('utf-8')
-
-
-    def unpad_message(self, message):
-        padding_size = message[-1]
-        if padding_size > 0:
-            return message[:-padding_size]
-        return message
 
 
     def _pad(self, s):
