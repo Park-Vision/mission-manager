@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import time
 
 from confluent_kafka import Consumer, Producer
@@ -43,10 +44,9 @@ class KafkaConnector:
         """Called once for each message produced to indicate delivery result.
         Triggered by poll() or flush()."""
         if err is not None:
-            print("Message delivery failed: {}".format(err))
+            logging.error(f"Message delivery failed: {err}")
         else:
-            pass
-            # print("Message delivered to {} [{}] at time {}".format(msg.topic(), msg.partition(), time.time()))
+            logging.debug(f"Message delivered to {msg.topic()} [{msg.partition()}] at time {time.time()}")
 
     def send_one(self, data):
         # Trigger any available delivery report callbacks from previous produce() calls
@@ -68,7 +68,7 @@ class KafkaConnector:
     async def consume_messages(self):
         """Async consume messages on assigned topic, when message is received, callback"""
         self.consumer.subscribe([f"drone-{config.DRONE_ID}"])
-        print("Subscribed to drone topic")
+        logging.info("Subscribed to drone topic")
 
         while True:
             loop = asyncio.get_running_loop()
@@ -77,7 +77,7 @@ class KafkaConnector:
             if msg is None:
                 continue
             if msg.error():
-                print("Consumer error: {}".format(msg.error()))
+                logging.error("Consumer error: {}".format(msg.error()))
                 continue
 
             print(msg.value())
@@ -85,15 +85,15 @@ class KafkaConnector:
             for i in range(10):
                 print(decrypted)
 
-            msg_value_dict = json.loads(decrypted)
-            print("Received message: " + str(msg_value_dict))
+            msg_value_dict = json.loads(msg.value().decode("utf-8"))
+            logging.debug("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
             # assigned to command content
             try:
-                self.command_callbacks[msg_value_dict["command"]](msg_value_dict)
+                await self.command_callbacks[msg_value_dict["command"]](msg_value_dict)
             except KeyError:
-                print(f"Invalid command from operator: {msg_value_dict}")
+                logging.error(f"Invalid command from operator: {msg_value_dict}")
                 continue
 
     def close_consumer(self):

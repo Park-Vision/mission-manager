@@ -22,8 +22,6 @@ correct_output = [
 
 
 def test_wp():
+    # Test processing parking spot json message
     waypoints = process_parking_message(input)
     assert waypoints == correct_output
-
-
-test_wp()

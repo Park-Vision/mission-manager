@@ -49,15 +49,15 @@ class Drone(object):
             }
             self.kafka_connection = KafkaConnector("localhost:9092", command_callbacks)
 
-    def handle_start(self, msg: dict):
+    async def handle_start(self, msg: dict):
         """ "React to 'start' signal sent from operator - ready for takeoff"""
         self.waypoints = process_parking_message(msg)
 
         self.ready_for_takeoff = True
 
-    def handle_stop(self, msg: dict):
+    async def handle_stop(self, msg: dict):
         """React to 'stop' signal sent from operator - immediately return home"""
-        self.to_RETURN()
+        await self.to_RETURN()
 
     def send_mission_stage(self):
         """Send current stage enum value to broker"""
@@ -77,7 +77,7 @@ class Drone(object):
             dist = distance_between_points(current_position, target)
 
             print(f"Distance to target: {dist} m")
-            if dist < 0.25: # tolerance
+            if dist < config.WAYPOINT_REACH_TOLERANCE_METERS:
                 # start work to establish whether parking spot is free
                 await self.decision_module.decide(waypoint)
                 return
@@ -178,7 +178,7 @@ class Drone(object):
 
         while (
             current_altitude := self.albatros_copter.get_corrected_position().alt
-        ) < target_alt - 0.25:  # tolerance
+        ) < target_alt - config.ABOVE_GROUND_TOLERANCE_METERS:
             print(f"Altitude: {current_altitude} m")
             await asyncio.sleep(1)
 
@@ -204,7 +204,7 @@ class Drone(object):
         # Detect landing
         while (
             current_altitude := self.albatros_copter.get_corrected_position().alt
-        ) > 0.25:  # tolerance
+        ) > config.ABOVE_GROUND_TOLERANCE_METERS:
             print(f"Altitude: {current_altitude} m")
             await asyncio.sleep(1)
 
