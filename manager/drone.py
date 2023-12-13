@@ -10,7 +10,9 @@ from albatros.nav.position import PositionGPS, distance_between_points
 from transitions.extensions.asyncio import AsyncMachine
 
 from manager import config
-from manager.decision.mock_decision import MockDecision
+# from manager.decision.mock_decision import MockDecision
+from manager.decision.detector_decision import DetectorDecision
+from manager.decision.camera.mock_camera import MockCamera
 from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
 from manager.mission.waypoint import Waypoint, process_parking_message
@@ -41,7 +43,7 @@ class Drone(object):
         self.home_point = Waypoint()
         self.mission = Mission()
         self.waypoints = []
-        self.decision_module = MockDecision()
+        self.decision_module = DetectorDecision(MockCamera("drone_photos/example_photos"))
         self.in_emergency_return = False
 
         if self.use_kafka:
