@@ -54,12 +54,20 @@ class KafkaConnector:
         # Trigger any available delivery report callbacks from previous produce() calls
         self.producer.poll(0)
 
+        encrypted = self.cipher.encrypt(data)
+        new_encrypted = str(fr'{encrypted}')
+
+        end_of_json = new_encrypted.rfind('}')
+
+        if end_of_json != -1:
+            new_encrypted = new_encrypted[:end_of_json + 1]
+
         # Asynchronously produce a message. The delivery report callback will
         # be triggered from the call to poll() above, or flush() below, when the
         # message has been successfully delivered or failed permanently.
         self.producer.produce(
             "drones-info",
-            data.encode("utf-8"),
+            new_encrypted,
             callback=self.delivery_report,
             key=str(config.DRONE_ID),
         )
@@ -81,16 +89,20 @@ class KafkaConnector:
             if msg.error():
                 logging.error("Consumer error: {}".format(msg.error()))
                 continue
+            print(msg.value())
+            if msg.value() is None:
+                continue
 
             decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
-            newDecrypted2 = str(fr'{decrypted}')
+            new_decrypted = str(fr'{decrypted}')
 
-            end_of_json = newDecrypted2.find('}')
-            
+            end_of_json = new_decrypted.rfind('}')
+
             if end_of_json != -1:
-                newDecrypted2 = newDecrypted2[:end_of_json + 1]
+                new_decrypted = new_decrypted[:end_of_json + 1]
 
-            msg_value_dict = json.loads(newDecrypted2)
+            print(new_decrypted)
+            msg_value_dict = json.loads(new_decrypted)
             logging.debug("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function

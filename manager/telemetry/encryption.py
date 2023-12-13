@@ -1,6 +1,8 @@
 import base64
 import hashlib
-from Crypto import Random
+import secrets
+
+from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 from base64 import b64decode
@@ -10,25 +12,28 @@ from base64 import b64decode
 # from cryptography.hazmat.primitives import hashes
 # import codecs
 
+
 class AESCipher(object):
 
     def __init__(self, key):
         self.bs = AES.block_size
         self.key = key
 
-    def encrypt(self, raw):
-        raw = self._pad(raw)
-        iv = Random.new().read(AES.block_size)
-        cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return base64.b64encode(iv + cipher.encrypt(raw.encode()))
+    def encrypt(self, message):
+        key = base64.b64decode(self.key)
+        iv = get_random_bytes(16)
 
-    # def decrypt(self, enc: str):
-    #     parts = enc.split(':')
-    #     iv = base64.b64decode(parts[0])
-    #     encrypted_bytes = base64.b64decode(parts[1])
-        
-    #     cipher = AES.new(self.key, AES.MODE_CBC, iv)
-    #     return AESCipher._unpad(cipher.decrypt(encrypted_bytes)).decode('utf-8')
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+
+        length = AES.block_size - (len(message) % AES.block_size)
+        message += chr(length) * length
+
+        encrypted = cipher.encrypt(message.encode('utf-8'))
+
+        iv_base64 = base64.b64encode(iv).decode('utf-8')
+        encrypted_base64 = base64.b64encode(encrypted).decode('utf-8')
+        #print(iv_base64 + ":" + encrypted_base64)
+        return iv_base64 + ":" + encrypted_base64
 
     def decrypt(self, encrypted_message):
         encrypted_message = str(encrypted_message)
@@ -39,11 +44,3 @@ class AESCipher(object):
         decrypted_message = cipher.decrypt(base64.b64decode(encrypted_data))
 
         return decrypted_message.decode('utf-8')
-
-
-    def _pad(self, s):
-        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
-
-    @staticmethod
-    def _unpad(s):
-        return s[:-ord(s[len(s)-1:])]
