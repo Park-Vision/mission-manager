@@ -55,12 +55,12 @@ class KafkaConnector:
         self.producer.poll(0)
 
         encrypted = self.cipher.encrypt(data)
-        new_encrypted = str(fr'{encrypted}')
+        new_encrypted = str(rf"{encrypted}")
 
-        end_of_json = new_encrypted.rfind('}')
+        end_of_json = new_encrypted.rfind("}")
 
         if end_of_json != -1:
-            new_encrypted = new_encrypted[:end_of_json + 1]
+            new_encrypted = new_encrypted[: end_of_json + 1]
 
         # Asynchronously produce a message. The delivery report callback will
         # be triggered from the call to poll() above, or flush() below, when the
@@ -94,12 +94,12 @@ class KafkaConnector:
                 continue
 
             decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
-            new_decrypted = str(fr'{decrypted}')
+            new_decrypted = str(rf"{decrypted}")
 
-            end_of_json = new_decrypted.rfind('}')
+            end_of_json = new_decrypted.rfind("}")
 
             if end_of_json != -1:
-                new_decrypted = new_decrypted[:end_of_json + 1]
+                new_decrypted = new_decrypted[: end_of_json + 1]
 
             print(new_decrypted)
             msg_value_dict = json.loads(new_decrypted)
