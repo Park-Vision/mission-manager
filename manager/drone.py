@@ -42,6 +42,7 @@ class Drone(object):
         self.mission = Mission()
         self.waypoints = []
         self.decision_module = MockDecision()
+        self.in_emergency_return = False
 
         if self.use_kafka:
             command_callbacks = {
@@ -58,6 +59,7 @@ class Drone(object):
 
     async def handle_stop(self, msg: dict):
         """React to 'stop' signal sent from operator - immediately return home"""
+        self.in_emergency_return = True
         await self.to_RETURN()
 
     def send_mission_stage(self):
@@ -217,7 +219,10 @@ class Drone(object):
 
         # Landed
         self.mission.end_timestamp = int(time.time())
-        self.mission.status = MissionStatus.FINISHED
+        if self.in_emergency_return:
+            self.mission.status = MissionStatus.INTERRUPTED
+        else:
+            self.mission.status = MissionStatus.FINISHED
 
         await self.to_RAPORT()
 
@@ -231,10 +236,11 @@ class Drone(object):
         self.albatros_copter.disarm()
 
         # Wait until all of the spots have been processed
-        while (
-            len(self.decision_module.free_spots) < len(self.waypoints) - 1
-        ):  # start pos not counted
-            await asyncio.sleep(1)
+        if not self.in_emergency_return:
+            while (
+                len(self.decision_module.free_spots) < len(self.waypoints) - 1
+            ):  # start pos not counted
+                await asyncio.sleep(1)
 
         # Set free/taken spots in mission to be converted to message, remove start post
         self.mission.free_spots = [
@@ -245,8 +251,13 @@ class Drone(object):
 
         mission_message = asdict(self.mission)
         mission_message["type"] = "missionResult"
+        print(mission_message)
         self.kafka_connection.send_one(json.dumps(mission_message))
 
+        # Reset before next flight
         self.mission = Mission()
+        self.decision_module.free_spots = []
+        self.in_emergency_return = False
 
+        # Prepare for next flight
         await self.to_PREPARE()
