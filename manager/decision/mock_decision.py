@@ -10,8 +10,10 @@ class MockDecision(Decision):
 
     def __init__(self) -> None:
         super().__init__()
-    
+
     async def decide(self, wp: Waypoint):
         # simulate processing time
         await asyncio.sleep(1)
-        self.free_spots.append({"parking_spot_id": wp.spot_id, "occupied": random.choice([True, False])})
+        self.free_spots.append(
+            {"parking_spot_id": wp.spot_id, "occupied": random.choice([True, False])}
+        )

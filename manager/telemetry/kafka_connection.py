@@ -6,6 +6,7 @@ import time
 from confluent_kafka import Consumer, Producer
 
 from manager import config
+from manager.telemetry.encryption import AESCipher
 
 ssl_config = {
     "metadata.broker.list": "SSL://" + config.PARKVISION_SERVER,
@@ -37,6 +38,7 @@ class KafkaConnector:
         self.producer = Producer(prod_config)
         self.consumer = Consumer(con_config)
         self.command_callbacks = command_callbacks
+        self.cipher = AESCipher(config.DRONE_KEY)
 
     def delivery_report(self, err, msg):
         """Called once for each message produced to indicate delivery result.
@@ -44,18 +46,28 @@ class KafkaConnector:
         if err is not None:
             logging.error(f"Message delivery failed: {err}")
         else:
-            logging.debug(f"Message delivered to {msg.topic()} [{msg.partition()}] at time {time.time()}")
+            logging.debug(
+                f"Message delivered to {msg.topic()} [{msg.partition()}] at time {time.time()}"
+            )
 
     def send_one(self, data):
         # Trigger any available delivery report callbacks from previous produce() calls
         self.producer.poll(0)
+
+        encrypted = self.cipher.encrypt(data)
+        new_encrypted = str(rf"{encrypted}")
+
+        end_of_json = new_encrypted.rfind("}")
+
+        if end_of_json != -1:
+            new_encrypted = new_encrypted[: end_of_json + 1]
 
         # Asynchronously produce a message. The delivery report callback will
         # be triggered from the call to poll() above, or flush() below, when the
         # message has been successfully delivered or failed permanently.
         self.producer.produce(
             "drones-info",
-            data.encode("utf-8"),
+            new_encrypted,
             callback=self.delivery_report,
             key=str(config.DRONE_ID),
         )
@@ -77,8 +89,20 @@ class KafkaConnector:
             if msg.error():
                 logging.error("Consumer error: {}".format(msg.error()))
                 continue
+            print(msg.value())
+            if msg.value() is None:
+                continue
 
-            msg_value_dict = json.loads(msg.value().decode("utf-8"))
+            decrypted = self.cipher.decrypt(msg.value().decode("utf-8"))
+            new_decrypted = str(rf"{decrypted}")
+
+            end_of_json = new_decrypted.rfind("}")
+
+            if end_of_json != -1:
+                new_decrypted = new_decrypted[: end_of_json + 1]
+
+            print(new_decrypted)
+            msg_value_dict = json.loads(new_decrypted)
             logging.debug("Received message: " + str(msg_value_dict))
 
             # react to command, by executing drone function
