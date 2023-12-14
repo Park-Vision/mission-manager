@@ -45,13 +45,16 @@ class Drone(object):
         self.waypoints = []
         self.decision_module = DetectorDecision(MockCamera("drone_photos/example_photos"))
         self.in_emergency_return = False
+        self.id = int(args.id)
+        self.key = args.key
+        self.photo_altitude = int(args.altitude)
 
         if self.use_kafka:
             command_callbacks = {
                 "start": self.handle_start,
                 "stop": self.handle_stop,
             }
-            self.kafka_connection = KafkaConnector("localhost:29092", command_callbacks)
+            self.kafka_connection = KafkaConnector("localhost:29092", command_callbacks, self.id, self.key)
 
     async def handle_start(self, msg: dict):
         """ "React to 'start' signal sent from operator - ready for takeoff"""
@@ -76,7 +79,7 @@ class Drone(object):
         target = PositionGPS.from_float_position(
             lat=waypoint.position[0],
             lon=waypoint.position[1],
-            alt=config.PHOTO_ALTITUDE,
+            alt=self.photo_altitude,
         )
 
         self.albatros_copter.fly_to_gps_position(target.lat, target.lon, target.alt)
@@ -175,7 +178,7 @@ class Drone(object):
         self.mission.start_timestamp = int(time.time())
         self.mission.status = MissionStatus.ONGOING
 
-        target_alt = config.PHOTO_ALTITUDE
+        target_alt = self.photo_altitude
         # TODO probably fix asyncio here
         self.albatros_copter.arm()
 

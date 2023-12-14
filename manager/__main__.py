@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 
+from manager import config
 from manager.drone import Drone
 
 
@@ -13,6 +14,11 @@ if __name__ == "__main__":
     parser.add_argument("--kafka", action="store_true")
     parser.add_argument("--no-kafka", dest="kafka", action="store_false")
     parser.set_defaults(kafka=True)
+
+    # Drone id, key and altitude can be specified in command line, but when not specified use default values from file
+    parser.add_argument('--id', nargs='?', default=config.DRONE_ID)
+    parser.add_argument('--key', nargs='?', default=config.DRONE_KEY)
+    parser.add_argument('--altitude', nargs='?', default=config.PHOTO_ALTITUDE)
 
     args = parser.parse_args()
 

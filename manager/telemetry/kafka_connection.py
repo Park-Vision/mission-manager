@@ -24,7 +24,7 @@ ssl_config = {
 
 
 class KafkaConnector:
-    def __init__(self, server: str, command_callbacks: dict) -> None:
+    def __init__(self, server: str, command_callbacks: dict, drone_id: int, drone_key: str) -> None:
         prod_config = {"bootstrap.servers": server}
         prod_config.update(ssl_config)
 
@@ -38,7 +38,9 @@ class KafkaConnector:
         self.producer = Producer(prod_config)
         self.consumer = Consumer(con_config)
         self.command_callbacks = command_callbacks
-        self.cipher = AESCipher(config.DRONE_KEY)
+        self.drone_id = drone_id
+        self.drone_key = drone_key
+        self.cipher = AESCipher(self.drone_key)
 
     def delivery_report(self, err, msg):
         """Called once for each message produced to indicate delivery result.
@@ -69,7 +71,7 @@ class KafkaConnector:
             "drones-info",
             new_encrypted,
             callback=self.delivery_report,
-            key=str(config.DRONE_ID),
+            key=str(self.drone_id),
         )
 
     def flush(self):
@@ -77,7 +79,7 @@ class KafkaConnector:
 
     async def consume_messages(self):
         """Async consume messages on assigned topic, when message is received, callback"""
-        self.consumer.subscribe([f"drone-{config.DRONE_ID}"])
+        self.consumer.subscribe([f"drone-{self.drone_id}"])
         logging.info("Subscribed to drone topic")
 
         while True:
