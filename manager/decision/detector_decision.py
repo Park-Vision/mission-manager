@@ -18,6 +18,7 @@ class DetectorDecision(Decision):
     def __init__(self, camera: Camera) -> None:
         super().__init__()
         self.camera = camera
+        self.model = YOLO("yolov8n.pt")  # pretrained YOLOv8n model
 
     def visualize_result(result) -> None:
         """Draw boxes to image for testing purposes"""
@@ -56,8 +57,7 @@ class DetectorDecision(Decision):
             image_width, image_height, image_width / 2, image_height / 2
         )
 
-        model = YOLO("yolov8n.pt")  # pretrained YOLOv8n model
-        results = model(photo_path)
+        results = self.model(photo_path)
 
         # Process results list
         for result in results:

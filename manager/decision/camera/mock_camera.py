@@ -25,21 +25,21 @@ class MockCamera(Camera):
         if self.directory_mode:
             self.file_counter = 0
 
-    def get_nth_file_path(self, n: int):
+    def get_next_file_path(self):
         files = [file for file in os.listdir(self.mock_photo_path) if os.path.isfile(os.path.join(self.mock_photo_path, file))]
 
-        if n >= len(files):
-            return os.path.join(self.mock_photo_path, files[0])
-        # Get the nth file path
-        return os.path.join(self.mock_photo_path, files[n - 1])
+        # Get the next file path
+        path = os.path.join(self.mock_photo_path, files[self.file_counter % len(files)])
+        self.file_counter += 1
+
+        return path
 
     async def take_photo(self) -> str:
         if self.mock_photo_path == "unspecified":
             return "drone_photos/example_photos/example1.jpg"
         elif self.directory_mode:
             # directory mode
-            photo_path = self.get_nth_file_path(self.file_counter)
-            self.file_counter += 1
+            photo_path = self.get_next_file_path()
             print(f"Mock camera taking photo {photo_path}")
             return photo_path
         else:
