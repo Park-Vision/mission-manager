@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 COPY pyproject.toml poetry.lock ./
 RUN pip3 install poetry==1.6.1
