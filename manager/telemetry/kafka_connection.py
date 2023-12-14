@@ -89,7 +89,7 @@ class KafkaConnector:
             if msg.error():
                 logging.error("Consumer error: {}".format(msg.error()))
                 continue
-            print(msg.value())
+            # print(msg.value())
             if msg.value() is None:
                 continue
 

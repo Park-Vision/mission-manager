@@ -8,5 +8,5 @@ class Decision(ABC):
         self.free_spots = []
 
     @abstractmethod
-    async def decide(self, wp: Waypoint):
+    async def decide(self, wp: Waypoint) -> bool:
         pass

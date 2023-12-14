@@ -10,7 +10,9 @@ from albatros.nav.position import PositionGPS, distance_between_points
 from transitions.extensions.asyncio import AsyncMachine
 
 from manager import config
-from manager.decision.mock_decision import MockDecision
+# from manager.decision.mock_decision import MockDecision
+from manager.decision.detector_decision import DetectorDecision
+from manager.decision.camera.mock_camera import MockCamera
 from manager.mission.mission import Mission, MissionStatus
 from manager.mission.path import create_path
 from manager.mission.waypoint import Waypoint, process_parking_message
@@ -41,7 +43,7 @@ class Drone(object):
         self.home_point = Waypoint()
         self.mission = Mission()
         self.waypoints = []
-        self.decision_module = MockDecision()
+        self.decision_module = DetectorDecision(MockCamera("drone_photos/example_photos"))
         self.in_emergency_return = False
 
         if self.use_kafka:
@@ -68,7 +70,7 @@ class Drone(object):
             message = {"type": "stage", "stage": int(self.state.value)}
             self.kafka_connection.send_one(json.dumps(message))
 
-    async def fly_to_single_point(self, waypoint: Waypoint) -> None:
+    async def fly_to_single_point(self, waypoint: Waypoint, take_photo: bool) -> None:
         # because mavlink sends coordinates in scaled form as integers
         # we use function which scales WGS84 coordinates by 7 decimal places (degE7)
         target = PositionGPS.from_float_position(
@@ -85,8 +87,9 @@ class Drone(object):
 
             print(f"Distance to target: {dist} m")
             if dist < config.WAYPOINT_REACH_TOLERANCE_METERS:
-                # start work to establish whether parking spot is free
-                await self.decision_module.decide(waypoint)
+                if take_photo:
+                    # start work to establish whether parking spot is free
+                    await self.decision_module.decide(waypoint)
                 return
             await asyncio.sleep(1)
 
@@ -199,8 +202,12 @@ class Drone(object):
         print("Entered FLIGHT")
         self.send_mission_stage()
 
-        for waypoint in self.waypoints:
-            await self.fly_to_single_point(waypoint)
+        for index, waypoint in enumerate(self.waypoints):
+            if index == 0:
+                # First waypoint is not above parking spots
+                await self.fly_to_single_point(waypoint, take_photo=False)
+            else:
+                await self.fly_to_single_point(waypoint, take_photo=True)
 
         await self.to_RETURN()
 
